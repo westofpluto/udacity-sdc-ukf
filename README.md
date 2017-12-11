@@ -26,11 +26,11 @@ This project uses the CTRV process model as the system dynamics. This is a nonli
 
 To test the performance, one can use the Udacity term2 simulator. The results are shown as follows:
 
-[both_sensors]: ./results-both-sensors.png
+![both_sensors][results-both-sensors]
 
-[radar_only]: ./results-radar-only.png
+![radar_only][results-radar-only]
 
-[both_sensors]: ./results-lidar-only.png
+![lidar_only][results-lidar-only]
 
 Note that when using both sensors, the RMSE's are:
 X: 0.074
@@ -71,4 +71,5 @@ Note that 89.5% of points are between 0.35 and 7.82 as expected. This validates 
 
 Below is a plot of the NIS for both radar and lidar sensors.
 
-[nis]: ./NIS.png
+![nis][NIS]
+
