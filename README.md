@@ -71,5 +71,5 @@ Note that 89.5% of points are between 0.35 and 7.82 as expected. This validates 
 
 Below is a plot of the NIS for both radar and lidar sensors.
 
-![nis][NIS]
+![nis](./NIS.png)
 
