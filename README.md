@@ -1,92 +1,74 @@
-# Unscented Kalman Filter Project Starter Code
-Self-Driving Car Engineer Nanodegree Program
+# Unscented Kalman Filter Project
+This project implements an Unscented Kalman Filter (UKF) for the Self-Driving Car Engineer Nanodegree Program, December 10, 2017.
 
-In this project utilize an Unscented Kalman Filter to estimate the state of a moving object of interest with noisy lidar and radar measurements. Passing the project requires obtaining RMSE values that are lower that the tolerance outlined in the project rubric. 
+The code in the project uses a UKF to estimate the state of a simulated vehicle in the [Udacity term2 simulator](https://github.com/udacity/self-driving-car-sim/releases). The vehicle drives in what looks like a figure-8 pattern. Measurements are provided via radar (range, heading angle, and range rate) and Lidar (direct position meaasurements).
 
-This project involves the Term 2 Simulator which can be downloaded [here](https://github.com/udacity/self-driving-car-sim/releases)
+The code in the project is in the src subfolder. To build the project on a different machine, perform the following steps:
 
-This repository includes two files that can be used to set up and intall [uWebSocketIO](https://github.com/uWebSockets/uWebSockets) for either Linux or Mac systems. For windows you can use either Docker, VMware, or even [Windows 10 Bash on Ubuntu](https://www.howtogeek.com/249966/how-to-install-and-use-the-linux-bash-shell-on-windows-10/) to install uWebSocketIO. Please see [this concept in the classroom](https://classroom.udacity.com/nanodegrees/nd013/parts/40f38239-66b6-46ec-ae68-03afd8a601c8/modules/0949fca6-b379-42af-a919-ee50aa304e6a/lessons/f758c44c-5e40-4e01-93b5-1a82aa4e044f/concepts/16cf4a78-4fc7-49e1-8621-3450ca938b77) for the required version and installation scripts.
+1. cd build
+2. rm -rf build
+3. rmdir build
+4. mkdir build
+5. cd build
+6. cmake ..
+7. make
+8. ./UnscentedKF
 
-Once the install for uWebSocketIO is complete, the main program can be built and ran by doing the following from the project top directory.
+Note that when running UnscentedKF, radar and lidar measurements are enabled by default. The user can run with just radar using:
 
-1. mkdir build
-2. cd build
-3. cmake ..
-4. make
-5. ./UnscentedKF
+./UnscentedKF false
 
-Tips for setting up your environment can be found [here](https://classroom.udacity.com/nanodegrees/nd013/parts/40f38239-66b6-46ec-ae68-03afd8a601c8/modules/0949fca6-b379-42af-a919-ee50aa304e6a/lessons/f758c44c-5e40-4e01-93b5-1a82aa4e044f/concepts/23d376c7-0195-4276-bdf0-e02f1f3c665d)
+which turns off lidar. To run with just lidar (turn off radar), run the code like this:
 
-Note that the programs that need to be written to accomplish the project are src/ukf.cpp, src/ukf.h, tools.cpp, and tools.h
+./UnscentedKF true false
 
-The program main.cpp has already been filled out, but feel free to modify it.
+This project uses the CTRV process model as the system dynamics. This is a nonlinear model with 5 state variables: x position, y position, speed, heading (yaw) angle, and yaw rate. The UKF creates a set of sigma points which are distributed around the existing estimate, propagates these points forward in time using the state prediction equations, computes mean and covariance estimates based on the propagates sigma points, and then uses sensor measurements to update the state estimates based on deviations from the mean predicted estimates.
 
-Here is the main protcol that main.cpp uses for uWebSocketIO in communicating with the simulator.
+To test the performance, one can use the Udacity term2 simulator. The results are shown as follows:
 
+[both_sensors]: ./results-both-sensors.png
 
-INPUT: values provided by the simulator to the c++ program
+[radar_only]: ./results-radar-only.png
 
-["sensor_measurement"] => the measurment that the simulator observed (either lidar or radar)
+[both_sensors]: ./results-lidar-only.png
 
+Note that when using both sensors, the RMSE's are:
+X: 0.074
+Y: 0.0846
+VX: 0.3560
+VY: 0.2410
 
-OUTPUT: values provided by the c++ program to the simulator
+When using only radar, the values are: 
+X: 0.1778
+Y: 0.2760
+VX: 0.4406
+VY: 0.8677
 
-["estimate_x"] <= kalman filter estimated position x
-["estimate_y"] <= kalman filter estimated position y
-["rmse_x"]
-["rmse_y"]
-["rmse_vx"]
-["rmse_vy"]
+which as expected is not quite as good as when using both sensors, but is still pretty good. 
 
----
+When using Lidar only, the results are:
+X: 0.1069
+Y: 0.0970
+VX: 0.6288
+VY: 0.2866
 
-## Other Important Dependencies
-* cmake >= 3.5
-  * All OSes: [click here for installation instructions](https://cmake.org/install/)
-* make >= 4.1 (Linux, Mac), 3.81 (Windows)
-  * Linux: make is installed by default on most Linux distros
-  * Mac: [install Xcode command line tools to get make](https://developer.apple.com/xcode/features/)
-  * Windows: [Click here for installation instructions](http://gnuwin32.sourceforge.net/packages/make.htm)
-* gcc/g++ >= 5.4
-  * Linux: gcc / g++ is installed by default on most Linux distros
-  * Mac: same deal as make - [install Xcode command line tools](https://developer.apple.com/xcode/features/)
-  * Windows: recommend using [MinGW](http://www.mingw.org/)
+which again as expected is slightly worse than when using both sensors, but is also still pretty good.
 
-## Basic Build Instructions
+Finally, a key part of the project was to check the NIS statistic and use that to adjust the process noise values. The NIS should follow a chi-squared distribution with the vast majority of points falling below the 95% confidence level, which for radar (3 degrees of freedom) is 7.82. To check this I wrote the script plotnis.py. Running this shows that the NIS values have the following distribution:
 
-1. Clone this repo.
-2. Make a build directory: `mkdir build && cd build`
-3. Compile: `cmake .. && make`
-4. Run it: `./UnscentedKF` Previous versions use i/o from text files.  The current state uses i/o
-from the simulator.
+python plotnis.py 
+Fraction between 0.0 and 0.35 = 0.0725806451613 
+Fraction between 0.35 and 7.82 = 0.895161290323 
+Fraction above 7.82 = 0.0322580645161 
 
-## Editor Settings
+Note that 89.5% of points are between 0.35 and 7.82 as expected. This validates that my choices for process noise (in ukf.cpp) were reasonable:
 
-We've purposefully kept editor configuration files out of this repo in order to
-keep it as simple and environment agnostic as possible. However, we recommend
-using the following settings:
+  // Process noise standard deviation longitudinal acceleration in m/s^2
+  std_a_ = 3;
 
-* indent using spaces
-* set tab width to 2 spaces (keeps the matrices in source code aligned)
+  // Process noise standard deviation yaw acceleration in rad/s^2
+  std_yawdd_ = 0.5;
 
-## Code Style
+Below is a plot of the NIS for both radar and lidar sensors.
 
-Please stick to [Google's C++ style guide](https://google.github.io/styleguide/cppguide.html) as much as possible.
-
-## Generating Additional Data
-
-This is optional!
-
-If you'd like to generate your own radar and lidar data, see the
-[utilities repo](https://github.com/udacity/CarND-Mercedes-SF-Utilities) for
-Matlab scripts that can generate additional data.
-
-## Project Instructions and Rubric
-
-This information is only accessible by people who are already enrolled in Term 2
-of CarND. If you are enrolled, see [the project page](https://classroom.udacity.com/nanodegrees/nd013/parts/40f38239-66b6-46ec-ae68-03afd8a601c8/modules/0949fca6-b379-42af-a919-ee50aa304e6a/lessons/c3eb3583-17b2-4d83-abf7-d852ae1b9fff/concepts/f437b8b0-f2d8-43b0-9662-72ac4e4029c1)
-for instructions and the project rubric.
-
-## How to write a README
-A well written README file can enhance your project and portfolio.  Develop your abilities to create professional README files by completing [this free course](https://www.udacity.com/course/writing-readmes--ud777).
-
+[nis]: ./NIS.png

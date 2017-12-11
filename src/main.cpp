@@ -68,12 +68,10 @@ int main(int argc, char* argv[])
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
 
-    //std::cout << "onMessage" << std::endl;
 
     if (length && length > 2 && data[0] == '4' && data[1] == '2')
     {
 
-      //std::cout << "onMessage: 42 message, websocket event" << std::endl;
 
       auto s = hasData(std::string(data));
       if (s != "") {
@@ -84,7 +82,6 @@ int main(int argc, char* argv[])
         
         if (event == "telemetry") {
           // j[1] is the data JSON object
-          std::cout << "onMessage: telemetry event" << std::endl;
           
           string sensor_measurment = j[1]["sensor_measurement"];
           
@@ -107,12 +104,10 @@ int main(int argc, char* argv[])
           		iss >> timestamp;
           		meas_package.timestamp_ = timestamp;
               if (!ukf.use_laser_) {
-                  std::cout << "onMessage: ignoring LASER measurement" << std::endl;
                   std::string msg = "42[\"manual\",{}]";
                   ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
                   return;
               }
-              std::cout << "onMessage: LASER measurement available" << std::endl;
           } else if (sensor_type.compare("R") == 0) {
 
       	  		meas_package.sensor_type_ = MeasurementPackage::RADAR;
@@ -127,12 +122,10 @@ int main(int argc, char* argv[])
           		iss >> timestamp;
           		meas_package.timestamp_ = timestamp;
               if (!ukf.use_radar_) {
-                  std::cout << "onMessage: ignoring RADAR measurement" << std::endl;
                   std::string msg = "42[\"manual\",{}]";
                   ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
                   return;
               }
-              std::cout << "onMessage: RADAR measurement available" << std::endl;
           }
           float x_gt;
     	  float y_gt;
@@ -186,7 +179,6 @@ int main(int argc, char* argv[])
           msgJson["rmse_vx"] = RMSE(2);
           msgJson["rmse_vy"] = RMSE(3);
           auto msg = "42[\"estimate_marker\"," + msgJson.dump() + "]";
-          // std::cout << msg << std::endl;
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
 	  
         }

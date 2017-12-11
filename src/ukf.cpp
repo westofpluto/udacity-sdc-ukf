@@ -104,10 +104,8 @@ UKF::UKF() {
 }
 
 UKF::~UKF() {
-  std::cout << "Closing NIS files" << std::endl;
   nis_radar_file.close();
   nis_laser_file.close();
-  std::cout << "Finished closing NIS files" << std::endl;
 }
 
 void UKF::AugmentedSigmaPoints() {
@@ -131,7 +129,6 @@ void UKF::AugmentedSigmaPoints() {
   P_aug(6,6)=std_yawdd_*std_yawdd_;
   //create square root matrix
   MatrixXd sqrtP_aug=P_aug.llt().matrixL();
-  //std::cout << "sqrtP_aug = " << sqrtP_aug << std::endl;
 
   //create augmented sigma points
   double f=sqrt(lambda_+n_aug_);
@@ -140,9 +137,6 @@ void UKF::AugmentedSigmaPoints() {
     Xsig_aug_.col(i+1)       = x_aug + f * sqrtP_aug.col(i);
     Xsig_aug_.col(i+1+n_aug_) = x_aug - f * sqrtP_aug.col(i);
   }
-
-  //print result
-  //std::cout << "Xsig_aug_ = " << std::endl << Xsig_aug_ << std::endl;
 
   // result is in Xsig_aug_
 }
@@ -165,12 +159,6 @@ void UKF::SigmaPointPrediction(double delta_t) {
     double yawd = Xsig_aug_(4,i);
     double nu_a = Xsig_aug_(5,i);
     double nu_yawdd = Xsig_aug_(6,i);
-
-    std::cout << "p_x, p_y are " << p_x << ", " << p_y << std::endl;
-    std::cout << "v is " << v << std::endl;
-    std::cout << "yaw, yawd are " << yaw << ", " << yawd << std::endl;
-    std::cout << "nu_a, nu_yawdd are " << nu_a << ", " << nu_yawdd << std::endl;
-    std::cout << std::endl;
 
     //predicted state values
     double px_p, py_p;
@@ -207,9 +195,6 @@ void UKF::SigmaPointPrediction(double delta_t) {
     Xsig_pred_(4,i) = yawd_p;
   }
 
-  //print result
-  //std::cout << "Xsig_pred_ = " << std::endl << Xsig_pred_ << std::endl;
-
   // result stored in Xsig_pred_
 }
 
@@ -238,18 +223,11 @@ void UKF::PredictMeanAndCovariance() {
 
     VectorXd x_diff = Xsig_pred_.col(i) - x;
     //angle normalization
-    //std::cout << "x_diff(3) is " << x_diff(3) << std::endl;
     while (x_diff(3)> M_PI) x_diff(3)-=2.*M_PI;
     while (x_diff(3)<-M_PI) x_diff(3)+=2.*M_PI;
 
     P = P + weights_(i) * x_diff * x_diff.transpose() ;
   }
-
-  //print result
-  std::cout << "Predicted state" << std::endl;
-  std::cout << x << std::endl;
-  std::cout << "Predicted covariance matrix" << std::endl;
-  std::cout << P << std::endl;
 
   //write result
   x_ = x;
@@ -343,10 +321,6 @@ void UKF::PredictLaserMeasurement() {
   //add measurement noise covariance matrix
   S_laser_ = S_laser_ + R_laser_;
 
-  //print result
-  //std::cout << "z_pred: " << std::endl << z_pred_laser_ << std::endl;
-  //std::cout << "S_laser_: " << std::endl << S_laser_ << std::endl;
-
   // result stored in z_pred_laser_ and S_laser_
 }
 
@@ -356,7 +330,6 @@ void UKF::PredictLaserMeasurement() {
  * either radar or laser.
  */
 void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
-    std::cout << "ProcessMeasurement called " << std::endl;
 
     if (!is_initialized_) {
         if (meas_package.sensor_type_ == MeasurementPackage::RADAR && !use_radar_) {
@@ -369,7 +342,6 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
           * Create the covariance matrix.
         */
         // first measurement
-        cout << "First measurement UKF: " << endl;
 
         if (meas_package.sensor_type_ == MeasurementPackage::RADAR) {
             /**
@@ -408,7 +380,6 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
 
         previous_timestamp_ = meas_package.timestamp_;
         is_initialized_ = true;
-        std::cout << "End of first measurement UKF: " << std::endl;
         return;
     }
 
@@ -419,13 +390,10 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
     //
     // PREDICTION STEP
     //
-    std::cout << "start of prediction" << std::endl;
     double delta_t = (meas_package.timestamp_ - previous_timestamp_) / 1000000.0;   //delta_t - expressed in seconds
     previous_timestamp_ = meas_package.timestamp_;
 
-    std::cout << "just before Prediction, delta_t is " << delta_t << std::endl;
     Prediction(delta_t);
-    std::cout << "just after Prediction" << std::endl;
 
     //
     // At this point we have the predicted state x_ and the predicted state error covariance matrix P_
@@ -435,17 +403,13 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
     //
     // UPDATE STEP
     //
-    std::cout << "start of update" << std::endl;
     if (meas_package.sensor_type_ == MeasurementPackage::RADAR && use_radar_) {
-        std::cout << "RADAR" << std::endl;
         PredictRadarMeasurement();
         UpdateStateRadar(meas_package);
     } else if (meas_package.sensor_type_ == MeasurementPackage::LASER && use_laser_) {
-        std::cout << "LASER" << std::endl;
         PredictLaserMeasurement();
         UpdateStateLaser(meas_package);
     }
-    std::cout << "after update" << std::endl;
 
     // print the output
     std::cout << "x_ = " << x_ << std::endl;
@@ -458,13 +422,9 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
  * measurement and this one.
  */
 void UKF::Prediction(double delta_t) {
-    std::cout << "Prediction0" << std::endl;
     AugmentedSigmaPoints();
-    std::cout << "Prediction1" << std::endl;
     SigmaPointPrediction(delta_t);
-    std::cout << "Prediction2" << std::endl;
     PredictMeanAndCovariance();
-    std::cout << "Prediction3" << std::endl;
 }
 
 /**
@@ -532,11 +492,6 @@ void UKF::UpdateStateFromMeasurement(MeasurementPackage meas_package) {
       K = Tc * S.inverse();
       z_diff = z - z_pred_laser_;
   }
-
-  std::cout << "## x_ is " << x_ << std::endl;
-  std::cout << "## P_ is " << P_ << std::endl;
-  std::cout << "## K is " << K << std::endl;
-  std::cout << "## z_diff is " << z_diff << std::endl;
 
   //update state mean and covariance matrix
   x_ = x_ + K * z_diff;

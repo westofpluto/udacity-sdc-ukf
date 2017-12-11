@@ -6,7 +6,29 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 
+def buckets(nisarray):
+    bins=[0.0,0.35,7.82,1000.0]
+    nb=len(bins)
+    cnt=[0]*nb
+    np=0
+    for p in nisarray:
+        np+=1
+        for k in range(1,nb):
+            if p >= bins[k-1] and p < bins[k]:
+                cnt[k-1]+=1
+                break
+  
+    if np>0: 
+        for k in range(nb):
+            cnt[k]/=float(np) 
+    return cnt
+
 dataRadar = np.loadtxt( "NIS_radar.txt", usecols=[0], skiprows=1 )
+fracs=buckets(dataRadar)
+print "Fraction between 0.0 and 0.35 = %s " % fracs[0]
+print "Fraction between 0.35 and 7.82 = %s " % fracs[1]
+print "Fraction above 7.82 = %s " % fracs[2]
+
 dataLaser = np.loadtxt( "NIS_laser.txt", usecols=[0], skiprows=1 )
 
 nisRadar = np.transpose(dataRadar)
